@@ -1,27 +1,42 @@
-import { useState } from 'react';
+import { useState, Suspense, Component } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useAppStore from '../store/useAppStore';
 import { Mail, Lock, Loader2, ArrowRight, Info } from 'lucide-react';
 import axios from 'axios';
+import Spline from '@splinetool/react-spline';
+
+// Simple Error Boundary to catch Spline loading errors
+class SplineErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { console.error("Spline Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
 
 const ROLE_CREDENTIALS = {
-  'Administrator': { email: '225samuel0032@dbit.in',  label: 'Admin Samuel',   color: '#a855f7' },
-  'Doctor':        { email: '225ananya0117@dbit.in',  label: 'Dr. Ananya',     color: '#00f0ff' },
-  'Nurse':         { email: '225siddhi0091@dbit.in',  label: 'Nurse Siddhi',   color: '#ec4899' },
-  'Cleaning Staff':{ email: 'adityatol18@gmail.com',  label: 'Cleaner Aditya', color: '#f59e0b' },
+  'Administrator': { email: '225samuel0032@dbit.in', label: 'Admin Samuel', color: '#a855f7' },
+  'Doctor': { email: '225ananya0117@dbit.in', label: 'Dr. Ananya', color: '#00f0ff' },
+  'Nurse': { email: '225siddhi0091@dbit.in', label: 'Nurse Siddhi', color: '#ec4899' },
+  'Cleaning Staff': { email: 'adityatol18@gmail.com', label: 'Cleaner Aditya', color: '#f59e0b' },
 };
 
 const roles = Object.keys(ROLE_CREDENTIALS);
 
 export default function Login() {
-  const [role, setRole]         = useState(roles[0]);
+  const [role, setRole] = useState(roles[0]);
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
-  const setUser  = useAppStore(state => state.setUser);
+  const setUser = useAppStore(state => state.setUser);
 
   const cred = ROLE_CREDENTIALS[role];
 
@@ -49,15 +64,27 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden text-white w-full">
-      <div className="absolute top-0 -left-1/4 w-[1000px] h-[1000px] bg-neon-blue/10 rounded-full blur-[150px]" />
-      <div className="absolute bottom-0 -right-1/4 w-[1000px] h-[1000px] bg-neon-purple/10 rounded-full blur-[150px]" />
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden text-white w-full">
+      {/* 3D Spline Background via iframe (bypass 403 errors) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <iframe 
+          src="https://my.spline.design/claritystream-OsRba2hzrCLo28QwrFSb2s4r/" 
+          frameBorder="0" 
+          width="100%" 
+          height="100%"
+          className="w-full h-full scale-110 opacity-70"
+          title="Spline 3D Scene"
+        />
+      </div>
+
+      <div className="absolute top-0 -left-1/4 w-[1000px] h-[1000px] bg-neon-blue/10 rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute bottom-0 -right-1/4 w-[1000px] h-[1000px] bg-neon-purple/10 rounded-full blur-[200px] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="w-full max-w-md relative z-10"
       >
         <div className="glass rounded-3xl p-8 shadow-2xl relative z-10 w-full">
           {/* Header */}
@@ -98,11 +125,10 @@ export default function Login() {
                       borderColor: ROLE_CREDENTIALS[r].color + '60',
                       boxShadow: `0 0 16px ${ROLE_CREDENTIALS[r].color}30`,
                     } : {}}
-                    className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border ${
-                      role === r
+                    className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-all border ${role === r
                         ? 'bg-white/10 border-white/30 text-white'
                         : 'bg-transparent border-white/8 text-zinc-500 hover:text-white hover:bg-white/5'
-                    }`}
+                      }`}
                   >
                     {r}
                   </button>

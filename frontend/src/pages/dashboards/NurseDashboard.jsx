@@ -13,7 +13,7 @@ const STATUS_COLORS = {
 };
 
 export default function NurseDashboard() {
-  const { wards, fetchWards, dischargePatient } = useAppStore();
+  const { wards, fetchWards, dischargePatient, admitPatient } = useAppStore();
   const [selectedWard] = useState(0); // Hardcode Ward 0 for demo purposes
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -33,7 +33,7 @@ export default function NurseDashboard() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axios.post('http://localhost:5001/api/patients', formData);
+      await admitPatient(formData, activeWard.id);
       setShowAddModal(false);
       setFormData({ name: '', age: '', gender: 'Male', diagnosis: '', allergies: '', admissionDate: new Date().toISOString().split('T')[0] });
     } catch (err) {

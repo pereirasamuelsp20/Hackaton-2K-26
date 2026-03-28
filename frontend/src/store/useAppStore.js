@@ -59,6 +59,18 @@ const useAppStore = create((set, get) => ({
     }
   },
 
+  admitPatient: async (patientData, wardId) => {
+    try {
+      await axios.post(`${API_URL}/patients`, { ...patientData, wardId });
+      // Immediate refresh for better UX
+      get().fetchWards();
+      get().fetchPatients();
+    } catch (err) {
+      console.error("Admission error", err);
+      throw err;
+    }
+  },
+
   // Actions
   dischargePatient: async (patientId) => {
     try {
