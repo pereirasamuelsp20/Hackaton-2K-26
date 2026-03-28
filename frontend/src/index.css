@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-blue: #00f0ff;
+  --color-neon-purple: #b026ff;
+  --color-dark-surface: #121214;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-zinc-900/50 backdrop-blur-md border border-white/10 shadow-xl;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #0d0d0f;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
