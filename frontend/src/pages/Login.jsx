@@ -22,9 +22,9 @@ class SplineErrorBoundary extends Component {
 
 const ROLE_CREDENTIALS = {
   'Administrator': { email: '225samuel0032@dbit.in', label: 'Admin Samuel', color: '#a855f7' },
-  'Doctor': { email: '225ananya0117@dbit.in', label: 'Dr. Ananya', color: '#00f0ff' },
-  'Nurse': { email: '225siddhi0091@dbit.in', label: 'Nurse Siddhi', color: '#ec4899' },
-  'Cleaning Staff': { email: 'adityatol18@gmail.com', label: 'Cleaner Aditya', color: '#f59e0b' },
+  'Doctor': { email: '', label: 'Doctor', color: '#00f0ff' },
+  'Nurse': { email: '', label: 'Nurse', color: '#ec4899' },
+  'Cleaning Staff': { email: '', label: 'Cleaning Staff', color: '#f59e0b' },
 };
 
 const roles = Object.keys(ROLE_CREDENTIALS);
@@ -32,6 +32,7 @@ const roles = Object.keys(ROLE_CREDENTIALS);
 export default function Login() {
   const [role, setRole] = useState(roles[0]);
   const [password, setPassword] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -47,12 +48,16 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!password) { setError('Please enter the password: 12345'); return; }
+    if (!password) { setError('Please enter the password'); return; }
+    
+    const finalEmail = role === 'Administrator' ? cred.email : emailInput;
+    if (role !== 'Administrator' && !finalEmail) { setError('Please input an email'); return; }
+
     setLoading(true);
     setError(null);
     try {
       const res = await axios.post('http://localhost:5001/api/auth/login', {
-        email: cred.email, password, role,
+        email: finalEmail, password, role,
       });
       setUser(res.data, res.data.token);
       navigate('/dashboard');
@@ -95,7 +100,6 @@ export default function Login() {
             <p className="text-zinc-400 mt-2 text-sm">Select your role and sign in</p>
           </div>
 
-          {/* Password hint banner removed for security */}
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Error message */}
             <AnimatePresence>
@@ -136,13 +140,27 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Auto-filled email representation */}
+            {/* Configurable email section based on Role */}
             <div>
               <label className="text-xs text-zinc-500 uppercase tracking-wider font-medium mb-2 block">Email</label>
-              <div className="flex items-center gap-3 bg-zinc-900/80 border border-white/8 rounded-xl px-4 py-3">
-                <Mail size={16} className="text-zinc-600 shrink-0" />
-                <span className="text-sm text-zinc-300 font-mono truncate">******************</span>
-              </div>
+              {role === 'Administrator' ? (
+                <div className="flex items-center gap-3 bg-zinc-900/80 border border-white/8 rounded-xl px-4 py-3">
+                  <Mail size={16} className="text-zinc-600 shrink-0" />
+                  <span className="text-sm text-zinc-300 font-mono truncate">******************</span>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                  <input
+                    type="email"
+                    value={emailInput}
+                    onChange={e => setEmailInput(e.target.value)}
+                    placeholder="Enter your email"
+                    autoComplete="username"
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-neon-blue/50 transition-all text-sm"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Password */}
@@ -156,7 +174,7 @@ export default function Login() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter Password"
                   autoComplete="current-password"
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-neon-blue/50 transition-all"
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-neon-blue/50 transition-all text-sm"
                 />
               </div>
             </div>
@@ -171,7 +189,7 @@ export default function Login() {
             >
               {loading
                 ? <Loader2 className="animate-spin" size={20} />
-                : <><span>Sign in as {cred.label}</span><ArrowRight size={18} /></>
+                : <><span>Sign in as {role === 'Administrator' ? cred.label : role}</span><ArrowRight size={18} /></>
               }
             </motion.button>
           </form>

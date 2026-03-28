@@ -35,7 +35,7 @@ const STATUS_COLORS = {
 };
 
 export default function DoctorDashboard() {
-  const { wards, patients, fetchWards, fetchPatients, dischargePatient } = useAppStore();
+  const { user, wards, patients, fetchWards, fetchPatients, dischargePatient } = useAppStore();
   const [activeTab, setActiveTab] = useState('beds');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [checkedMeds, setCheckedMeds] = useState({});
@@ -47,11 +47,17 @@ export default function DoctorDashboard() {
     fetchPatients();
   }, [fetchWards, fetchPatients]);
 
-  const allBeds = wards.flatMap(w =>
+  const visibleWards = wards.filter(w => {
+    if (user?.email === '225ananya0117@dbit.in') return w.name === 'Cardiology Ward';
+    if (user?.email === 'mohan@gmail.com') return w.name === 'Neurology Ward';
+    return true;
+  });
+
+  const allBeds = visibleWards.flatMap(w =>
     (w.beds || []).map(b => ({ ...b, wardName: w.name }))
   );
   const occupiedBeds   = allBeds.filter(b => b.status === 'OCCUPIED');
-  const targetDischarge = patients.filter(p => p.adminReviewRequested);
+  const targetDischarge = patients.filter(p => p.adminReviewRequested && allBeds.some(b => b.patientId === p.id || b.patient?.id === p.id));
 
   const handleDischarge = async (p) => {
     setDischarging(p.id);
@@ -326,7 +332,7 @@ export default function DoctorDashboard() {
           <div className="glass rounded-2xl border border-white/5 p-4">
             <h4 className="font-bold text-sm text-white mb-3">Ward Snapshot</h4>
             <div className="space-y-2">
-              {wards.map(w => (
+              {visibleWards.map(w => (
                 <div key={w.id}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-zinc-400 truncate max-w-[130px]">{w.name}</span>

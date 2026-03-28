@@ -7,20 +7,15 @@ export default function Landing() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black text-white">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover opacity-40 mix-blend-screen"
-      >
-        <source src="https://cdn.pixabay.com/video/2019/11/05/28607-371425126_large.mp4" type="video/mp4" />
-      </video>
+      {/* Background Blobs and Gradients */}
+      <div className="absolute inset-0 bg-[#0d0d0f]">
+        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-[#0d0d0f] to-[#0d0d0f] z-0" />
+      </div>
 
-      {/* Floating Blobs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-blue rounded-full mix-blend-screen filter blur-[128px] opacity-30 animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neon-purple rounded-full mix-blend-screen filter blur-[128px] opacity-30 animate-pulse" style={{ animationDelay: '1s'}} />
+      {/* Floating Blobs (Enhanced for better background fill) */}
+      <div className="absolute top-0 -left-1/4 w-[800px] h-[800px] bg-neon-blue/20 rounded-full mix-blend-screen filter blur-[160px] opacity-40 animate-pulse pointer-events-none" />
+      <div className="absolute -bottom-1/4 -right-1/4 w-[800px] h-[800px] bg-neon-purple/20 rounded-full mix-blend-screen filter blur-[160px] opacity-40 animate-pulse pointer-events-none" style={{ animationDelay: '2s'}} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full filter blur-[120px] opacity-20 pointer-events-none" />
 
       {/* Glass Overlay Content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-4">

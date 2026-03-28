@@ -10,10 +10,11 @@ import axios from 'axios';
 const API = 'http://localhost:5001/api';
 
 const VIEWS = [
-  { id: 'overview', label: 'Macro Overview', icon: BarChart3 },
-  { id: 'staff',    label: 'Staff Matrix',   icon: UserCog },
-  { id: 'handover', label: 'Shift Handover', icon: FileOutput },
-  { id: 'flags',    label: 'Flags & Delays', icon: Flag },
+  { id: 'overview',   label: 'Macro Overview', icon: BarChart3 },
+  { id: 'staff_mgmt', label: 'Add Members',    icon: Users },
+  { id: 'staff',      label: 'Staff Matrix',   icon: UserCog },
+  { id: 'handover',   label: 'Shift Handover', icon: FileOutput },
+  { id: 'flags',      label: 'Flags & Delays', icon: Flag },
 ];
 
 const STAFF = [
@@ -43,8 +44,36 @@ export default function AdminDashboard() {
   const [staffAssignments, setStaffAssignments] = useState(
     Object.fromEntries(STAFF.map(s => [s.name, s.ward]))
   );
+  const [dbStaff, setDbStaff] = useState([]);
+  const [newMember, setNewMember] = useState({ name: '', email: '', password: '', role: 'Doctor' });
+  const [creatingMember, setCreatingMember] = useState(false);
 
-  useEffect(() => { fetchWards(); fetchPatients(); }, [fetchWards, fetchPatients]);
+  useEffect(() => { 
+    fetchWards(); 
+    fetchPatients(); 
+    fetchDbStaff();
+  }, [fetchWards, fetchPatients]);
+
+  const fetchDbStaff = async () => {
+    try {
+      const res = await axios.get(`${API}/auth/staff`);
+      setDbStaff(res.data);
+    } catch (e) { console.error('Error fetching staff list'); }
+  };
+
+  const handleAddMember = async (e) => {
+    e.preventDefault();
+    setCreatingMember(true);
+    try {
+      await axios.post(`${API}/auth/register`, newMember);
+      await fetchDbStaff();
+      setNewMember({ name: '', email: '', password: '', role: 'Doctor' });
+    } catch (e) {
+      alert(e.response?.data?.error || 'Failed to add member');
+    } finally {
+      setCreatingMember(false);
+    }
+  };
 
   const handleRequestReviewAdmin = async (patientId) => {
     await requestReview(patientId);
@@ -102,6 +131,111 @@ export default function AdminDashboard() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
         >
+
+          {/* ── VIEW: STAFF MANAGEMENT (NEW) ── */}
+          {activeView === 'staff_mgmt' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Form Card */}
+              <div className="lg:col-span-1 glass p-6 rounded-3xl border border-white/10 shadow-xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/10 blur-[60px] rounded-full pointer-events-none" />
+                <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+                  <Activity size={20} className="text-neon-purple" /> Add New Staff
+                </h3>
+                <form onSubmit={handleAddMember} className="space-y-4 relative z-10">
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1.5 block ml-1">Full Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newMember.name}
+                      onChange={e => setNewMember({...newMember, name: e.target.value})}
+                      placeholder="e.g. Dr. John Doe"
+                      className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-blue/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1.5 block ml-1">Email Address</label>
+                    <input 
+                      required
+                      type="email" 
+                      value={newMember.email}
+                      onChange={e => setNewMember({...newMember, email: e.target.value})}
+                      placeholder="john@wardwatch.com"
+                      className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-blue/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1.5 block ml-1">Initial Access Key</label>
+                    <input 
+                      required
+                      type="password" 
+                      value={newMember.password}
+                      onChange={e => setNewMember({...newMember, password: e.target.value})}
+                      placeholder="••••••••"
+                      className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-blue/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1.5 block ml-1">Operational Role</label>
+                    <select 
+                      value={newMember.role}
+                      onChange={e => setNewMember({...newMember, role: e.target.value})}
+                      className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-neon-blue/50"
+                    >
+                      <option value="DOCTOR">Doctor</option>
+                      <option value="NURSE">Nurse</option>
+                      <option value="CLEANING">Cleaning Staff</option>
+                      <option value="ADMIN">Administrator</option>
+                    </select>
+                  </div>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={creatingMember}
+                    className="w-full bg-linear-to-r from-neon-blue to-neon-purple text-white font-black py-3.5 rounded-xl shadow-lg mt-2 transition-all disabled:opacity-50"
+                  >
+                    {creatingMember ? 'Initializing Member...' : 'Register Member'}
+                  </motion.button>
+                </form>
+              </div>
+
+              {/* Staff List */}
+              <div className="lg:col-span-2 glass rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
+                <div className="px-6 py-4 border-b border-white/5 bg-white/3 flex justify-between items-center">
+                  <h3 className="text-lg font-black text-white">Registered Team Members</h3>
+                  <span className="text-xs bg-neon-blue/20 text-neon-blue px-3 py-1 rounded-full font-bold">{dbStaff.length} Total</span>
+                </div>
+                <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto custom-scrollbar">
+                  {dbStaff.map(member => (
+                    <div key={member.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/3 transition group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-tr from-neon-blue/20 to-neon-purple/20 flex items-center justify-center font-bold text-neon-blue border border-white/10">
+                          {member.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white group-hover:text-neon-blue transition-colors">{member.name}</div>
+                          <div className="text-xs text-zinc-500">{member.email}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border ${
+                          (member.role?.toUpperCase() === 'ADMINISTRATOR' || member.role?.toUpperCase() === 'ADMIN') ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' :
+                          (member.role?.toUpperCase() === 'DOCTOR') ? 'bg-neon-blue/10 text-neon-blue border-neon-blue/30' :
+                          (member.role?.toUpperCase() === 'NURSE') ? 'bg-pink-500/10 text-pink-400 border-pink-500/30' :
+                          'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                        }`}>
+                          {member.role}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {dbStaff.length === 0 && (
+                    <div className="py-20 text-center text-zinc-500 italic">No members found in operation registry.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── VIEW: MACRO OVERVIEW ── */}
           {activeView === 'overview' && (

@@ -30,10 +30,16 @@ function App() {
         
         {user && (
           <Route path="/dashboard" element={<DashboardLayout />}>
-            {user.role === 'Administrator' && <Route index element={<AdminDashboard />} />}
-            {user.role === 'Doctor' && <Route index element={<DoctorDashboard />} />}
-            {user.role === 'Nurse' && <Route index element={<NurseDashboard />} />}
-            {user.role === 'Cleaning Staff' && <Route index element={<CleaningDashboard />} />}
+            <Route index element={
+              (() => {
+                const role = user.role?.toUpperCase();
+                if (role === 'ADMINISTRATOR' || role === 'ADMIN') return <AdminDashboard />;
+                if (role === 'DOCTOR') return <DoctorDashboard />;
+                if (role === 'NURSE') return <NurseDashboard />;
+                if (role === 'CLEANING STAFF' || role === 'CLEANING') return <CleaningDashboard />;
+                return <Navigate to="/" replace />;
+              })()
+            } />
           </Route>
         )}
         

@@ -13,6 +13,7 @@ const useAppStore = create((set, get) => ({
 
   // Setup generic actions
   setUser: (user, token) => set({ user, token }),
+  clearNotifications: () => set({ notifications: [] }),
   logout: () => {
     set({ user: null, token: null, wards: [], patients: [], notifications: [] });
     socket.disconnect();

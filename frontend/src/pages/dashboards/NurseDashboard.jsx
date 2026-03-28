@@ -13,7 +13,7 @@ const STATUS_COLORS = {
 };
 
 export default function NurseDashboard() {
-  const { wards, fetchWards, dischargePatient, admitPatient } = useAppStore();
+  const { user, wards, fetchWards, dischargePatient, admitPatient } = useAppStore();
   const [selectedWard] = useState(0); // Hardcode Ward 0 for demo purposes
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +27,13 @@ export default function NurseDashboard() {
     fetchWards();
   }, [fetchWards]);
 
-  const activeWard = wards[selectedWard];
+  const visibleWards = wards.filter(w => {
+    if (user?.email === '225ananya0117@dbit.in') return w.name === 'Cardiology Ward';
+    if (user?.email === 'mohan@gmail.com') return w.name === 'Neurology Ward';
+    return true;
+  });
+
+  const activeWard = visibleWards[selectedWard] || visibleWards[0];
 
   const handleAddPatient = async (e) => {
     e.preventDefault();
