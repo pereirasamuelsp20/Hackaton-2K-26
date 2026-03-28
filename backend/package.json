@@ -5,9 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "prestart": "lsof -ti:5001 | xargs kill -9 2>/dev/null || true",
+    "prestart": "lsof -ti:5001 | xargs kill -9 || true",
+    "predev": "lsof -ti:5001 | xargs kill -9 || true",
     "start": "node server.js",
-    "predev": "lsof -ti:5001 | xargs kill -9 2>/dev/null || true",
     "dev": "nodemon server.js"
   },
   "keywords": [],

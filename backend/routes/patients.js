@@ -24,25 +24,16 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const { prisma, io } = req;
-  const { name, age, dob, gender, diagnosis, allergies, history, medication, admissionDate, wardId } = req.body;
+  const { name, age, dob, gender, diagnosis, allergies, history, medication, admissionDate } = req.body;
   
   try {
-    // 1. Find an available bed (prioritize wardId if provided)
-    let availableBed = null;
-    if (wardId) {
-      availableBed = await prisma.bed.findFirst({
-        where: { status: 'AVAILABLE', wardId: parseInt(wardId) }
-      });
-    }
+    // 1. Find an available bed
+    const availableBed = await prisma.bed.findFirst({
+      where: { status: 'AVAILABLE' }
+    });
 
     if (!availableBed) {
-      availableBed = await prisma.bed.findFirst({
-        where: { status: 'AVAILABLE' }
-      });
-    }
-
-    if (!availableBed) {
-      return res.status(400).json({ error: "No beds available in the requested ward or system-wide." });
+      return res.status(400).json({ error: "No beds available" });
     }
 
     // 2. Find a random doctor
@@ -89,12 +80,8 @@ router.post('/', async (req, res) => {
 
     res.json(patient);
   } catch (error) {
-    console.error("Patient create error:", error);
-    res.status(500).json({ 
-      error: "Failed to create patient", 
-      details: error.message,
-      stack: error.stack 
-    });
+    console.error("Patient create error", error);
+    res.status(500).json({ error: "Failed to create patient" });
   }
 });
 
