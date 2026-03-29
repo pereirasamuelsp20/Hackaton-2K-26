@@ -22,9 +22,9 @@ class SplineErrorBoundary extends Component {
 
 const ROLE_CREDENTIALS = {
   'Administrator': { email: '225samuel0032@dbit.in', label: 'Admin Samuel', color: '#a855f7' },
-  'Doctor': { email: '', label: 'Doctor', color: '#00f0ff' },
-  'Nurse': { email: '', label: 'Nurse', color: '#ec4899' },
-  'Cleaning Staff': { email: '', label: 'Cleaning Staff', color: '#f59e0b' },
+  'Doctor': { email: '225ananya0117@dbit.in', label: 'Doctor Ananya', color: '#00f0ff' },
+  'Nurse': { email: '225siddhi0091@dbit.in', label: 'Nurse Siddhi', color: '#ec4899' },
+  'Cleaning Staff': { email: 'adityatol18@gmail.com', label: 'Cleaner Aditya', color: '#f59e0b' },
 };
 
 const roles = Object.keys(ROLE_CREDENTIALS);
@@ -44,6 +44,7 @@ export default function Login() {
   const handleRoleChange = (newRole) => {
     setRole(newRole);
     setError(null);
+    setEmailInput('');
   };
 
   const handleLogin = async (e) => {
