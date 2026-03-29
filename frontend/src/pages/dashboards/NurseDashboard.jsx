@@ -23,6 +23,8 @@ export default function NurseDashboard() {
     name: '', age: '', gender: 'Male', diagnosis: '', allergies: '', admissionDate: new Date().toISOString().split('T')[0]
   });
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     fetchWards();
   }, [fetchWards]);
@@ -58,80 +60,83 @@ export default function NurseDashboard() {
 
   if (!activeWard) return <div className="p-8 text-zinc-500">Loading Ward Data...</div>;
 
+  const filteredBeds = activeWard.beds?.filter(bed => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const bedNoMatches = bed.number.toLowerCase().includes(term);
+    const patientMatches = bed.patient?.name.toLowerCase().includes(term);
+    return bedNoMatches || patientMatches;
+  });
+
   return (
     <div className="flex flex-col gap-6 w-full h-full pb-10">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-pink-500/20 rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.3)]">
             <HeartPulse className="text-pink-500" size={32} />
           </div>
           <div>
             <h2 className="text-3xl font-black text-white">{activeWard.name}</h2>
-            <p className="text-zinc-400">Manage patient care and bed statuses</p>
+            <p className="text-zinc-400 text-sm mt-1">Manage patient care and bed statuses</p>
           </div>
         </div>
         
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-neon-blue to-neon-purple hover:opacity-90 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all active:scale-95"
-        >
-          <Plus size={18} /> Add Patient
-        </button>
+        <div className="flex items-center gap-3">
+          <input 
+            type="text"
+            placeholder="Search bed or patient..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-hidden focus:border-neon-blue transition-all min-w-[200px]"
+          />
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-neon-blue to-neon-purple hover:opacity-90 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all active:scale-95 shrink-0"
+          >
+            <Plus size={18} /> Add Patient
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {activeWard.beds?.map(bed => (
-          <motion.div
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {filteredBeds?.map(bed => (
+          <div
             key={bed.id}
-            whileHover={{ scale: 1.02 }}
-            className={`p-5 rounded-3xl border glass relative ${STATUS_COLORS[bed.status] || 'border-white/10 bg-white/5'}`}
+            className={`p-4 rounded-2xl border glass flex flex-col ${STATUS_COLORS[bed.status] || 'border-white/10 bg-white/5'}`}
           >
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-2xl font-black text-white">{bed.number}</span>
-              <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-current`}>
-                {bed.status.replace(/_/g, ' ')}
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-lg font-black">{bed.number}</span>
+              <span className="text-[10px] border border-current rounded-full px-2 py-0.5 uppercase font-bold">
+                {bed.status?.replace(/_/g, ' ')}
               </span>
             </div>
-
-            {bed.status === 'OCCUPIED' && bed.patient ? (
-              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col h-full space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-white shrink-0">
-                    {bed.patient.name.charAt(0)}
-                  </div>
-                  <div className="overflow-hidden">
-                    <div className="font-bold text-lg leading-tight text-white truncate">{bed.patient.name}</div>
-                    <div className="text-xs text-zinc-300 truncate">{bed.patient.age} yrs • {bed.patient.gender}</div>
+            {bed.patient
+              ? (
+                <div className="mt-2 pt-2 border-t border-current/20 flex flex-col flex-1">
+                  <div className="text-xs font-semibold truncate">{bed.patient.name}</div>
+                  <div className="text-[10px] opacity-60 truncate">{bed.patient.age} yrs • {bed.patient.gender}</div>
+                  {bed.patient.diagnosis && (
+                    <div className="text-[10px] opacity-80 mt-1 truncate" title={bed.patient.diagnosis}>Dx: {bed.patient.diagnosis}</div>
+                  )}
+                  {bed.patient.allergies && bed.patient.allergies !== 'None' && (
+                    <div className="text-[10px] text-red-400 mt-1 flex items-center gap-1 font-bold">
+                      <AlertCircle size={10} /> {bed.patient.allergies}
+                    </div>
+                  )}
+                  <div className="mt-auto pt-3">
+                    <button
+                      onClick={() => handleDischarge(bed.patient.id)}
+                      disabled={dischargingId === bed.patient.id}
+                      className="text-[10px] w-full px-2 py-1 bg-white/10 hover:bg-white/20 text-white transition border border-white/10 rounded-lg flex justify-center items-center gap-1"
+                    >
+                      {dischargingId === bed.patient.id ? <Loader2 size={10} className="animate-spin" /> : <><LogOut size={10} /> Discharge</>}
+                    </button>
                   </div>
                 </div>
-                
-                {bed.patient.diagnosis && (
-                  <div className="text-xs text-zinc-400 line-clamp-2">
-                    <span className="font-semibold text-zinc-300">Dx:</span> {bed.patient.diagnosis}
-                  </div>
-                )}
-
-                {bed.patient.allergies && bed.patient.allergies !== 'None' && (
-                  <div className="flex items-center gap-2 text-xs text-red-100 bg-red-500/40 px-3 py-2 rounded-lg font-bold border border-red-500/50 mt-auto">
-                    <AlertCircle size={14} /> Allergy: {bed.patient.allergies}
-                  </div>
-                )}
-                
-                <button
-                  onClick={() => handleDischarge(bed.patient.id)}
-                  disabled={dischargingId === bed.patient.id}
-                  className="mt-4 w-full flex justify-center items-center gap-2 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/10"
-                >
-                  {dischargingId === bed.patient.id ? <Loader2 size={16} className="animate-spin" /> : <><LogOut size={16} /> Discharge Patient</>}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-center h-[100px] opacity-40 text-sm">
-                <BedDouble size={24} className="mr-2" />
-                Empty Bed
-              </div>
-            )}
-          </motion.div>
+              )
+              : <div className="text-xs opacity-40 mt-2 pt-2 border-t border-current/20 italic">Empty</div>
+            }
+          </div>
         ))}
       </div>
 

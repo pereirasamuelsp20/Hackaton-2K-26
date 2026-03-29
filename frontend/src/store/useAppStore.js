@@ -19,8 +19,12 @@ const useAppStore = create((set, get) => ({
     socket.disconnect();
   },
 
+  socketInitialized: false,
+
   // Initialize Socket.io integration
   initSocket: () => {
+    if (get().socketInitialized) return;
+    
     socket.connect();
     
     // Listening to backend broadcasts
@@ -32,13 +36,21 @@ const useAppStore = create((set, get) => ({
     });
 
     socket.on('notification', (notif) => {
-      set((state) => ({ notifications: [notif, ...state.notifications] }));
+      set((state) => {
+        // Filter by role if targetRoles is provided
+        if (notif.targetRoles && state.user && !notif.targetRoles.includes(state.user.role.toUpperCase())) {
+          return state;
+        }
+        return { notifications: [notif, ...state.notifications] };
+      });
     });
 
     socket.on('patientDischarged', () => {
       get().fetchPatients();
       get().fetchWards();
     });
+
+    set({ socketInitialized: true });
   },
 
   // Fetching data
@@ -76,9 +88,11 @@ const useAppStore = create((set, get) => ({
   dischargePatient: async (patientId) => {
     try {
       await axios.post(`${API_URL}/patients/${patientId}/discharge`);
-      // Event listener for 'patientDischarged' handles UI update
+      await get().fetchWards();
+      await get().fetchPatients();
     } catch (e) {
       console.error(e);
+      throw e;
     }
   },
 

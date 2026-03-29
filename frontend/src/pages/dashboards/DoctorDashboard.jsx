@@ -41,6 +41,7 @@ export default function DoctorDashboard() {
   const [checkedMeds, setCheckedMeds] = useState({});
   const [signedOff, setSignedOff] = useState({});
   const [discharging, setDischarging] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchWards();
@@ -58,6 +59,14 @@ export default function DoctorDashboard() {
   );
   const occupiedBeds   = allBeds.filter(b => b.status === 'OCCUPIED');
   const targetDischarge = patients.filter(p => p.adminReviewRequested && allBeds.some(b => b.patientId === p.id || b.patient?.id === p.id));
+
+  const filteredBeds = allBeds.filter(bed => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const bedNoMatches = bed.number.toLowerCase().includes(term);
+    const patientMatches = bed.patient?.name.toLowerCase().includes(term);
+    return bedNoMatches || patientMatches;
+  });
 
   const handleDischarge = async (p) => {
     setDischarging(p.id);
@@ -107,27 +116,39 @@ export default function DoctorDashboard() {
               {/* ── TAB: BED AVAILABILITY ── */}
               {activeTab === 'beds' && (
                 <div>
-                  <h3 className="text-xl font-black text-white mb-4 flex items-center gap-2">
-                    <BedIcon size={20} className="text-neon-blue" /> Tactical Bed Grid
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {allBeds.map(bed => (
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-black text-white flex items-center gap-2">
+                      <BedIcon size={20} className="text-neon-blue" /> Tactical Bed Grid
+                    </h3>
+                    <input 
+                      type="text"
+                      placeholder="Search bed or patient..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-hidden focus:border-neon-blue transition-all min-w-[200px]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {filteredBeds.map(bed => (
                       <div
                         key={bed.id}
-                        className={`p-4 rounded-2xl border glass relative ${STATUS_COLORS[bed.status] || 'bg-white/5 text-zinc-400 border-white/10'}`}
+                        className={`p-4 rounded-2xl border glass ${STATUS_COLORS[bed.status] || 'border-white/10 bg-white/5'}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-lg font-black">{bed.number}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider border border-current rounded-full px-2 py-0.5">
+                          <span className="text-[10px] border border-current rounded-full px-2 py-0.5 uppercase font-bold">
                             {bed.status?.replace(/_/g, ' ')}
                           </span>
                         </div>
-                        <div className="text-xs opacity-60">{bed.wardName}</div>
-                        {bed.patient && (
-                          <div className="mt-2 pt-2 border-t border-current/20 text-xs font-semibold truncate">
-                            {bed.patient.name}
-                          </div>
-                        )}
+                        <div className="text-[10px] opacity-60 mb-1">{bed.wardName}</div>
+                        {bed.patient
+                          ? (
+                            <div className="mt-2 pt-2 border-t border-current/20">
+                              <div className="text-xs font-semibold truncate">{bed.patient.name}</div>
+                            </div>
+                          )
+                          : <div className="text-xs opacity-40 mt-2 pt-2 border-t border-current/20 italic">Empty</div>
+                        }
                       </div>
                     ))}
                   </div>

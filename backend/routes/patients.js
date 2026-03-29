@@ -24,12 +24,15 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const { prisma, io } = req;
-  const { name, age, dob, gender, diagnosis, allergies, history, medication, admissionDate } = req.body;
+  const { name, age, dob, gender, diagnosis, allergies, history, medication, admissionDate, wardId } = req.body;
   
   try {
-    // 1. Find an available bed
+    // 1. Find an available bed in the requested ward (or fallback to any if not provided)
     const availableBed = await prisma.bed.findFirst({
-      where: { status: 'AVAILABLE' }
+      where: { 
+        status: 'AVAILABLE',
+        ...(wardId && { wardId: parseInt(wardId) })
+      }
     });
 
     if (!availableBed) {
@@ -100,7 +103,8 @@ router.put('/:id/request-review', async (req, res) => {
     if (patient.assignedDoctor) {
         io.emit('notification', {
             type: 'ADMIN',
-            message: `Admin requested discharge review for patient ${patient.name} from Dr. ${patient.assignedDoctor.name}`
+            message: `Admin requested discharge review for patient ${patient.name} from Dr. ${patient.assignedDoctor.name}`,
+            targetRoles: ['DOCTOR', 'ADMIN', 'ADMINISTRATOR']
         });
     }
     

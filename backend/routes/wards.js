@@ -6,8 +6,10 @@ router.get('/', async (req, res) => {
   const { prisma } = req;
   try {
     const wards = await prisma.ward.findMany({
+      orderBy: { id: 'asc' },
       include: {
         beds: {
+          orderBy: { id: 'asc' },
           include: {
             patient: true,
           }
@@ -39,6 +41,7 @@ router.get('/:id/beds', async (req, res) => {
   try {
     const beds = await prisma.bed.findMany({
       where: { wardId },
+      orderBy: { id: 'asc' },
       include: {
         patient: true
       }

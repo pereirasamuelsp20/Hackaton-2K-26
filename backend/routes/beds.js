@@ -15,10 +15,18 @@ router.put('/:id/status', async (req, res) => {
 
     // Make sure we broadcast the change
     io.emit('bedUpdate', { bedId, status });
-    io.emit('notification', {
-      type: 'CLEANING',
-      message: `Bed ${bed.number} is now ${status.replace('_', ' ')}`
-    });
+    if (status === 'AVAILABLE') {
+      io.emit('notification', {
+        type: 'BED_AVAILABLE',
+        message: `Bed ${bed.number} has been sanitized and is now available for admission`,
+        targetRoles: ['DOCTOR', 'NURSE', 'ADMIN', 'ADMINISTRATOR']
+      });
+    } else {
+      io.emit('notification', {
+        type: 'CLEANING',
+        message: `Bed ${bed.number} is now ${status.replace('_', ' ')}`
+      });
+    }
 
     await prisma.log.create({
       data: {
